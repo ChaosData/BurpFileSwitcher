@@ -1,0 +1,240 @@
+package trust.nccgroup.burpfileswitcher;
+
+import burp.IBurpExtenderCallbacks;
+import burp.ITab;
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
+import org.fife.ui.rsyntaxtextarea.TextEditorPane;
+import org.fife.ui.rsyntaxtextarea.Theme;
+import org.fife.ui.rtextarea.RTextArea;
+import org.fife.ui.rtextarea.RTextScrollPane;
+
+import javax.swing.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.JTextComponent;
+import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.io.IOException;
+
+public class FileSwitcherTab extends JPanel implements ITab {
+
+  private final IBurpExtenderCallbacks callbacks;
+  private JButton button;
+  private JSplitPane splitPane;
+
+  public TextEditorPane editor;
+
+  private final FileSwitchers fs;
+  private boolean firstResize = true;
+
+  private FileSwitch selectedFileSwitch = null;
+
+  FileSwitcherTab(IBurpExtenderCallbacks _callbacks) {
+    callbacks = _callbacks;
+    fs = new FileSwitchers(this, callbacks);
+    initComponents();
+
+    button.addActionListener((e) -> {
+      if (selectedFileSwitch != null) {
+        selectedFileSwitch.data = editor.getText();
+        fs.save();
+      }
+    });
+    fs.load();
+  }
+
+  public FileSwitchers getFileSwitchers() {
+    return fs;
+  }
+
+  public void highlight() {
+    JTabbedPane parentTabbedPane = (JTabbedPane) getUiComponent().getParent();
+    if (parentTabbedPane != null) {
+      for (int i = 0; i < parentTabbedPane.getTabCount(); i++) {
+        if (parentTabbedPane.getComponentAt(i).equals(this)) {
+          parentTabbedPane.setBackgroundAt(i, new Color(0xff6633));
+          Timer timer = new Timer(3000, e -> {
+            for (int j = 0; j < parentTabbedPane.getTabCount(); j++) {
+              if (parentTabbedPane.getComponentAt(j).equals(this)) {
+                parentTabbedPane.setBackgroundAt(j, Color.BLACK);
+                break;
+              }
+            }
+          });
+          timer.setRepeats(false);
+          timer.start();
+          break;
+        }
+      }
+    }
+  }
+
+  private void initComponents() {
+
+    splitPane = new JSplitPane();
+    splitPane.addComponentListener(new ComponentAdapter(){
+      @Override
+      public void componentResized(ComponentEvent e) {
+        if(firstResize){
+          splitPane.setDividerLocation(0.5);
+          splitPane.setResizeWeight(0.5);
+          firstResize = false;
+        }
+      }
+    });
+
+    JScrollPane left_scroll = new JScrollPane();
+    button = new JButton();
+    setLayout(new BorderLayout());
+    left_scroll.setViewportView(fs.getUI());
+    splitPane.setLeftComponent(left_scroll);
+
+    //note: this is needed to fix a weird bug w/ burp causing key events to drop
+    //UIManager.put("RTextAreaUI.actionMap", null);
+    UIManager.put("RSyntaxTextAreaUI.actionMap", null);
+    JTextComponent.removeKeymap("RTextAreaKeymap");
+
+    editor = new TextEditorPane(RTextArea.INSERT_MODE, true);
+    editor.setCodeFoldingEnabled(false);
+
+    RTextScrollPane editor_pane = new RTextScrollPane(editor, true);
+    editor.setEnabled(true);
+    editor.setTabSize(2);
+    editor.setTabsEmulated(true);
+    editor_pane.setEnabled(true);
+
+    editor.addKeyListener(new KeyListener() {
+      @Override
+      public void keyTyped(KeyEvent e) {
+        switch (e.getKeyChar()) {
+          case ' ': {
+            try {
+              editor.getDocument().insertString(editor.getCaretPosition(), " ", null);
+            } catch (BadLocationException e1) {
+              e1.printStackTrace();
+            }
+            break;
+          }
+//          case (char)0xa: {
+//            try {
+//              editor.getDocument().insertString(editor.getCaretPosition(), (String)editor.getLineSeparator(), null);
+//            } catch (BadLocationException e1) {
+//              e1.printStackTrace();
+//            }
+//            break;
+//          }
+//          case (char)0xd: {
+//            try {
+//              editor.getDocument().insertString(editor.getCaretPosition(), (String)editor.getLineSeparator(), null);
+//            } catch (BadLocationException e1) {
+//              e1.printStackTrace();
+//            }
+//            break;
+//          }
+        }
+
+//        System.out.println(e);
+//        int i = e.getKeyChar();
+//        System.out.println(i);
+
+      }
+
+      @Override
+      public void keyPressed(KeyEvent e) {
+      }
+
+      @Override
+      public void keyReleased(KeyEvent e) {
+      }
+    });
+
+    LookAndFeel laf = UIManager.getLookAndFeel();
+
+    try {
+      UIManager.setLookAndFeel(InterceptingLookAndFeel.getInstance(laf));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    editor.setFont(new Font(Font.MONOSPACED, editor.getFont().getStyle(), 12));
+    Theme theme;
+    try {
+      theme = Theme.load(getClass().getResourceAsStream("/org/fife/ui/rsyntaxtextarea/themes/dark.xml"));
+      theme.apply(editor);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    editor.setEditable(false);
+    callbacks.customizeUiComponent(editor);
+    callbacks.customizeUiComponent(editor_pane);
+
+    splitPane.setRightComponent(editor_pane);
+
+    add(splitPane, BorderLayout.CENTER);
+
+    button.setText("Save");
+    add(button, BorderLayout.SOUTH);
+  }
+
+
+  @Override
+  public String getTabCaption() {
+    return "File Switcher";
+  }
+
+  @Override
+  public Component getUiComponent() {
+    return this;
+  }
+
+  void loadFile(FileSwitch fileSwitcher) {
+
+    if (selectedFileSwitch != null) {
+      selectedFileSwitch.data = editor.getText();
+      fs.save();
+    }
+
+    selectedFileSwitch = fileSwitcher;
+
+    editor.setText(selectedFileSwitch.data);
+
+    int rpos = selectedFileSwitch.uri.lastIndexOf('.');
+    String ext = "js";
+    if (rpos != -1) {
+      ext = selectedFileSwitch.uri.substring(rpos+1);
+    }
+
+    switch (ext) {
+      case "html": {
+        editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_HTML);
+        break;
+      }
+      case "js": {
+        editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVASCRIPT);
+        break;
+      }
+      case "json": {
+        editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JSON);
+        break;
+      }
+      case "css": {
+        editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_CSS);
+        break;
+      }
+      default: {
+        editor.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_HTML);
+      }
+    }
+    editor.setEditable(true);
+  }
+
+  void clearFile() {
+    editor.setEditable(false);
+    editor.setText("");
+    selectedFileSwitch = null;
+  }
+
+}
