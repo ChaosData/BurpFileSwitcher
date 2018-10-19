@@ -53,28 +53,37 @@ class InterceptingLookAndFeel {
 
 
   private static LookAndFeel setupProxy(LookAndFeel original) {
-    Enhancer e = new Enhancer();
-    e.setSuperclass(original.getClass());
-    e.setCallback(new MethodInterceptor() {
-      public Object intercept(Object obj, Method method,
-                              Object[] args, MethodProxy p) throws Throwable {
+    if (original.getClass().getName().contains("EnhancerByCGLIB")) {
+      return original;
+    }
+    try {
+      Enhancer e = new Enhancer();
+      e.setSuperclass(original.getClass());
+      e.setCallback(new MethodInterceptor() {
+        public Object intercept(Object obj, Method method,
+                                Object[] args, MethodProxy p) throws Throwable {
 
-        if ("provideErrorFeedback".equals(method.getName())) {
-          Class<?>[] pts = method.getParameterTypes();
-          if (pts.length == 1 && Component.class.equals(pts[0])) {
-            Object o = args[0];
-            if (o instanceof Component) {
-              Component c = (Component) o;
-              if (c instanceof RTextAreaBase || c instanceof RTextScrollPane) {
-                return null;
+          if ("provideErrorFeedback".equals(method.getName())) {
+            Class<?>[] pts = method.getParameterTypes();
+            if (pts.length == 1 && Component.class.equals(pts[0])) {
+              Object o = args[0];
+              if (o instanceof Component) {
+                Component c = (Component) o;
+                if (c instanceof RTextAreaBase || c instanceof RTextScrollPane) {
+                  //System.out.println(c.getClass().getName());
+                  return null;
+                }
               }
             }
           }
+          return p.invokeSuper(obj, args);
         }
-        return p.invokeSuper(obj, args);
-      }
-    });
-    return (LookAndFeel)e.create();
+      });
+      return (LookAndFeel) e.create();
+    } catch (Throwable t) {
+      t.printStackTrace();
+      return original;
+    }
   }
 }
 

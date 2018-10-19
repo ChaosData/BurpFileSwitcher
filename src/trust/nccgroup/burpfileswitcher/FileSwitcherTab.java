@@ -16,7 +16,10 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public class FileSwitcherTab extends JPanel implements ITab {
 
@@ -36,12 +39,13 @@ public class FileSwitcherTab extends JPanel implements ITab {
     fs = new FileSwitchers(this, callbacks);
     initComponents();
 
-    button.addActionListener((e) -> {
-      if (selectedFileSwitch != null) {
-        selectedFileSwitch.data = editor.getText();
-        fs.save();
-      }
-    });
+//    button.addActionListener((e) -> {
+//      if (selectedFileSwitch != null) {
+//        selectedFileSwitch.data = editor.getText();
+//        selectedFileSwitch.raw_data = selectedFileSwitch.data.getBytes(StandardCharsets.UTF_8);
+//        fs.save();
+//      }
+//    });
     fs.load();
   }
 
@@ -97,6 +101,21 @@ public class FileSwitcherTab extends JPanel implements ITab {
     JTextComponent.removeKeymap("RTextAreaKeymap");
 
     editor = new TextEditorPane(RTextArea.INSERT_MODE, true);
+    editor.setDirty(false);
+
+    editor.addPropertyChangeListener(TextEditorPane.DIRTY_PROPERTY, new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        boolean dirty = (Boolean)evt.getNewValue();
+        if (dirty) {
+          if (selectedFileSwitch != null) {
+            selectedFileSwitch.setData(editor.getText());
+            fs.save();
+          }
+          editor.setDirty(false);
+        }
+      }
+    });
     editor.setCodeFoldingEnabled(false);
 
     RTextScrollPane editor_pane = new RTextScrollPane(editor, true);
@@ -175,8 +194,8 @@ public class FileSwitcherTab extends JPanel implements ITab {
 
     add(splitPane, BorderLayout.CENTER);
 
-    button.setText("Save");
-    add(button, BorderLayout.SOUTH);
+//    button.setText("Save");
+//    add(button, BorderLayout.SOUTH);
   }
 
 
@@ -191,20 +210,25 @@ public class FileSwitcherTab extends JPanel implements ITab {
   }
 
   void loadFile(FileSwitch fileSwitcher) {
-
-    if (selectedFileSwitch != null) {
-      selectedFileSwitch.data = editor.getText();
+    if (selectedFileSwitch != null)  {
+      selectedFileSwitch.setData(editor.getText());
       fs.save();
+    }
+
+    if (fileSwitcher == null) {
+      System.out.println("FileSwitcherTab::loadFile: null");
+      return;
     }
 
     selectedFileSwitch = fileSwitcher;
 
-    editor.setText(selectedFileSwitch.data);
+    editor.setText(selectedFileSwitch.getData());
+    editor.setDirty(false);
 
-    int rpos = selectedFileSwitch.uri.lastIndexOf('.');
+    int rpos = selectedFileSwitch.getUriKey().lastIndexOf('.');
     String ext = "js";
     if (rpos != -1) {
-      ext = selectedFileSwitch.uri.substring(rpos+1);
+      ext = selectedFileSwitch.getUriKey().substring(rpos+1);
     }
 
     switch (ext) {
@@ -234,6 +258,7 @@ public class FileSwitcherTab extends JPanel implements ITab {
   void clearFile() {
     editor.setEditable(false);
     editor.setText("");
+    editor.setDirty(false);
     selectedFileSwitch = null;
   }
 

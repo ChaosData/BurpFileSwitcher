@@ -19,7 +19,7 @@ public class ExtensionRoot implements IBurpExtender {
     callbacks.customizeUiComponent(fst);
     callbacks.addSuiteTab(fst);
 
-    callbacks.registerHttpListener(new FileSwitcherInterceptor(callbacks));
+    callbacks.registerProxyListener(new FileSwitcherInterceptor(callbacks));
 
     callbacks.registerContextMenuFactory(new SendToFileSwitcher(callbacks, fst));
   }

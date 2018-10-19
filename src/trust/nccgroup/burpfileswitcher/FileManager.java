@@ -1,12 +1,13 @@
 package trust.nccgroup.burpfileswitcher;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class FileManager {
 
-  private Map<String, byte[]> map = new ConcurrentHashMap<>();
+  private Map<String, FileSwitch> map = new ConcurrentHashMap<>();
 
   private static FileManager fm = null;
 
@@ -24,6 +25,22 @@ public class FileManager {
 
   void clear() {
     map.clear();
+  }
+
+
+  public static String getKey(String uri) {
+    try {
+      URL u = new URL(uri);
+      return getKey(u);
+    } catch (MalformedURLException e) {
+      String msg = "invalid URI: " + uri;
+      if (ExtensionRoot.callbacks != null) {
+        ExtensionRoot.callbacks.issueAlert(msg);
+      } else {
+        System.err.println(msg);
+      }
+      return null;
+    }
   }
 
   public static String getKey(String origin, String path) {
@@ -63,7 +80,14 @@ public class FileManager {
 
 
   public byte[] getFile(String key) {
-    return map.getOrDefault(key, null);
+    FileSwitch fs = map.getOrDefault(key, null);
+    if (fs != null) {
+      if (!fs.isEnabled) {
+        return null;
+      }
+      return fs.getRawData();
+    }
+    return null;
   }
 
   public byte[] getFile(String origin, String path) {
@@ -74,16 +98,20 @@ public class FileManager {
     return getFile(getKey(u));
   }
 
-  public void setFile(String key, byte[] data) {
-    map.put(key, data);
+  public void setFile(String key, FileSwitch fs) {
+    map.put(key, fs);
   }
 
-  public void setFile(String origin, String path, byte[] data) {
-    setFile(getKey(origin, path), data);
+  public void setFile(String origin, String path, FileSwitch fs) {
+    setFile(getKey(origin, path), fs);
   }
 
-  public void setFile(URL u, byte[] data) {
-    setFile(getKey(u), data);
+  public void setFile(URL u, FileSwitch fs) {
+    setFile(getKey(u), fs);
+  }
+
+  public FileSwitch removeFile(String key) {
+    return map.remove(key);
   }
 
 }

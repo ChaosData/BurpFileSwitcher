@@ -118,9 +118,9 @@ public class FileSwitchers {
     editFileSwitcherButton.addActionListener(e -> {
       int selectedRow = fileSwitcherTable.getSelectedRow();
       if (selectedRow != -1) {
-        FileSwitch tempFileSwitcher = fileSwitcherTableModel.getFileSwitcher(selectedRow);
+        FileSwitch tempFileSwitcher = fileSwitcherTableModel.get(selectedRow);
 
-        fileSwitcherUriTextField.setText(tempFileSwitcher.uri);
+        fileSwitcherUriTextField.setText(tempFileSwitcher.getUri());
         fileSwitcherCommentTextField.setText(tempFileSwitcher.comment);
 
         int result = JOptionPane.showConfirmDialog(
@@ -134,7 +134,7 @@ public class FileSwitchers {
               fileSwitcherUriTextField.getText(),
               fileSwitcherCommentTextField.getText()
           );
-          fileSwitcherTableModel.updateFileSwitcher(selectedRow, newFileSwitcher);
+          fileSwitcherTableModel.update(selectedRow, newFileSwitcher);
           fileSwitcherTableModel.fireTableDataChanged();
         }
         resetFileSwitcherDialog();
@@ -150,7 +150,7 @@ public class FileSwitchers {
     deleteFileSwitcherButton.addActionListener(e -> {
       int selectedRow = fileSwitcherTable.getSelectedRow();
       if (selectedRow != -1) {
-        fileSwitcherTableModel.deleteFileSwitcher(selectedRow);
+        fileSwitcherTableModel.delete(selectedRow);
         fileSwitcherTableModel.fireTableDataChanged();
         parent.clearFile();
       }
@@ -185,7 +185,7 @@ public class FileSwitchers {
 
         for (int i=f; i <= l; i++) {
           if (lsm.isSelectedIndex(i)) {
-            parent.loadFile(fileSwitcherTableModel.getFileSwitcher(i));
+            parent.loadFile(fileSwitcherTableModel.get(i));
             break;
           }
         }

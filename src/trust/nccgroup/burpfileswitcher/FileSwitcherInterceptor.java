@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-public class FileSwitcherInterceptor implements IHttpListener {
+public class FileSwitcherInterceptor implements IProxyListener {
 
   private IBurpExtenderCallbacks callbacks;
   private IExtensionHelpers helpers;
@@ -23,10 +23,12 @@ public class FileSwitcherInterceptor implements IHttpListener {
   }
 
   @Override
-  public void processHttpMessage(int toolFlag, boolean messageIsRequest, IHttpRequestResponse messageInfo) {
-    if (toolFlag != IBurpExtenderCallbacks.TOOL_PROXY) {
-      return;
-    }
+  public void processProxyMessage(boolean messageIsRequest, IInterceptedProxyMessage message) {
+//    if (toolFlag != IBurpExtenderCallbacks.TOOL_PROXY) {
+//      return;
+//    }
+
+    IHttpRequestResponse messageInfo = message.getMessageInfo();
 
     byte[] orig_req = messageInfo.getRequest();
     IRequestInfo ireqi = helpers.analyzeRequest(messageInfo.getHttpService(), orig_req);

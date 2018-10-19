@@ -18,7 +18,7 @@ public class FileSwitcherTableModel extends AbstractTableModel {
 
   private String[] columnNames = {
     "Enabled",
-    "uri",
+    "URI",
     "Comment",
   };
 
@@ -28,7 +28,6 @@ public class FileSwitcherTableModel extends AbstractTableModel {
   }
 
   private List<FileSwitch> fileSwitches = new ArrayList<>();
-
 
   @Override
   public int getColumnCount() {
@@ -52,7 +51,7 @@ public class FileSwitcherTableModel extends AbstractTableModel {
       case 0:
         return tempFS.isEnabled;
       case 1:
-        return tempFS.uri;
+        return tempFS.getUri();
       case 2:
         return tempFS.comment;
       default:
@@ -82,7 +81,9 @@ public class FileSwitcherTableModel extends AbstractTableModel {
         tempFS.isEnabled = (Boolean)value;
         break;
       case 1:
-        tempFS.uri = (String)value;
+        FileManager.getInstance().removeFile(tempFS.getUriKey());
+        tempFS.setUri((String)value);
+        add(tempFS, false);
         break;
       case 2:
         tempFS.comment = (String)value;
@@ -90,44 +91,73 @@ public class FileSwitcherTableModel extends AbstractTableModel {
       default:
         break;
     }
-    fileSwitches.set(row, tempFS);
     save();
   }
 
-  FileSwitch getFileSwitcher(int selectedRow) {
-    return fileSwitches.get(selectedRow);
+  FileSwitch get(int selectedRow) {
+    FileSwitch fs = fileSwitches.get(selectedRow);
+    if (fs == null) {
+      System.out.println("FileSwitcherTableModel::get: invalid row " + selectedRow);
+    }
+    return fs;
   }
 
   public void add(FileSwitch f) {
+    add(f, true);
+  }
+
+  public void add(FileSwitch f, boolean save) {
+    FileSwitch popped = FileManager.getInstance().removeFile(f.getUriKey());
+    if (popped != null) {
+      List<Integer> l = new ArrayList<>();
+      // should be only one, but check anyway
+      for (int i=0; i<fileSwitches.size(); i++) {
+        if (popped.getUriKey().equals(fileSwitches.get(i).getUriKey())) {
+          l.add(i);
+        }
+      }
+      for (int i : l) {
+        delete(i, false);
+      }
+    }
+
     fileSwitches.add(f);
+    FileManager.getInstance().setFile(f.getUriKey(), f);
     save();
   }
 
-  void updateFileSwitcher(int selectedRow, FileSwitch f) {
-    fileSwitches.set(selectedRow, f);
+  void update(int selectedRow, FileSwitch _f) {
+    FileSwitch fs = fileSwitches.get(selectedRow);
+    FileManager.getInstance().removeFile(fs.getUriKey());
+    fs.isEnabled = _f.isEnabled;
+    fs.setUri(_f.getUri());
+    fs.comment = _f.comment;
+    fs.setData(_f.getData());
+    add(fs, false);
     save();
   }
 
-  void deleteFileSwitcher(int selectedRow) {
-    fileSwitches.remove(selectedRow);
-    save();
+  void delete(int selectedRow) {
+    delete(selectedRow, true);
+  }
+
+  void delete(int selectedRow, boolean save) {
+    FileSwitch fs = fileSwitches.remove(selectedRow);
+    FileManager.getInstance().removeFile(fs.getUriKey());
+    if (save) {
+      save();
+    }
   }
 
   private void copyToFileManager() {
     FileManager fm = FileManager.getInstance();
     fm.clear();
     for (FileSwitch fs : fileSwitches) {
-      try {
-        fm.setFile(new URL(fs.uri), fs.data.getBytes(StandardCharsets.UTF_8));
-      } catch (MalformedURLException e) {
-        callbacks.issueAlert("Invalid URL: " + fs.uri);
-      }
+      fm.setFile(fs.getUriKey(), fs);
     }
   }
 
   void save() {
-    copyToFileManager();
-
     String to_persist = gson.toJson(fileSwitches);
     callbacks.saveExtensionSetting(
       BurpFileSwitcher.extensionName, to_persist
@@ -144,8 +174,15 @@ public class FileSwitcherTableModel extends AbstractTableModel {
     }
 
     fileSwitches = gson.fromJson(persisted, new TypeToken<List<FileSwitch>>(){}.getType());
+    for (FileSwitch fs : fileSwitches) {
+      if (fs.getUri() != null) {
+        fs.setUri(fs.getUri());
+      }
+      if (fs.getData() != null) {
+        fs.setData(fs.getData());
+      }
+    }
     fireTableDataChanged();
-
     copyToFileManager();
   }
 }

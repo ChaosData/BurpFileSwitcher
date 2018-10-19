@@ -62,7 +62,7 @@ public class SendToFileSwitcher implements IContextMenuFactory {
               }
             }
             FileSwitch fs = new FileSwitch(FileManager.getKey(u), comment);
-            fs.data = data;
+            fs.setData(data);
             fstm.add(fs);
             successes += 1;
           }
