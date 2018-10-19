@@ -34,9 +34,13 @@ public class FileSwitcherTab extends JPanel implements ITab {
 
   private FileSwitch selectedFileSwitch = null;
 
+  private FileSwitcherEditor fse;
+
   FileSwitcherTab(IBurpExtenderCallbacks _callbacks) {
     callbacks = _callbacks;
     fs = new FileSwitchers(this, callbacks);
+    fse = new FileSwitcherEditor(callbacks);
+    //fse = new FileSwitcherEditor();
     initComponents();
 
 //    button.addActionListener((e) -> {
@@ -47,6 +51,10 @@ public class FileSwitcherTab extends JPanel implements ITab {
 //      }
 //    });
     fs.load();
+  }
+
+  public void postInit() {
+    fse.postInit();
   }
 
   public FileSwitchers getFileSwitchers() {
@@ -97,6 +105,7 @@ public class FileSwitcherTab extends JPanel implements ITab {
 
     //note: this is needed to fix a weird bug w/ burp causing key events to drop
     //UIManager.put("RTextAreaUI.actionMap", null);
+
     UIManager.put("RSyntaxTextAreaUI.actionMap", null);
     JTextComponent.removeKeymap("RTextAreaKeymap");
 
@@ -169,13 +178,13 @@ public class FileSwitcherTab extends JPanel implements ITab {
       }
     });
 
-    LookAndFeel laf = UIManager.getLookAndFeel();
-
-    try {
-      UIManager.setLookAndFeel(InterceptingLookAndFeel.getInstance(laf));
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+//    LookAndFeel laf = UIManager.getLookAndFeel();
+//
+//    try {
+//      UIManager.setLookAndFeel(InterceptingLookAndFeel.getInstance(laf));
+//    } catch (Exception e) {
+//      e.printStackTrace();
+//    }
 
     editor.setFont(new Font(Font.MONOSPACED, editor.getFont().getStyle(), 12));
     Theme theme;
@@ -190,7 +199,10 @@ public class FileSwitcherTab extends JPanel implements ITab {
     callbacks.customizeUiComponent(editor);
     callbacks.customizeUiComponent(editor_pane);
 
-    splitPane.setRightComponent(editor_pane);
+    //splitPane.setRightComponent(editor_pane);
+    splitPane.setRightComponent(fse);
+
+
 
     add(splitPane, BorderLayout.CENTER);
 
