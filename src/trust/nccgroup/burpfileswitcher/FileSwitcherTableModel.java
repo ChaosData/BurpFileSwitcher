@@ -168,6 +168,7 @@ public class FileSwitcherTableModel extends AbstractTableModel {
     String persisted = callbacks.loadExtensionSetting(
       BurpFileSwitcher.extensionName
     );
+    //System.out.println("persisted: " + persisted);
 
     if (persisted == null) {
       return;

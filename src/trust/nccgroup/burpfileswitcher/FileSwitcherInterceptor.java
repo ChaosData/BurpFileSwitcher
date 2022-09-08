@@ -117,6 +117,7 @@ public class FileSwitcherInterceptor implements IProxyListener {
     for (byte[] b : nlines) {
       nrl += b.length + 2;
     }
+    nrl -= 2;
 
     int pos = 0;
     byte[] new_res = new byte[nrl];

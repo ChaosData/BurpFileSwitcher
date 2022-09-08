@@ -168,7 +168,6 @@ public class FileSwitchers {
     fileSwitchersButtonPanel.add(addFileSwitcherButton, c);
     fileSwitchersButtonPanel.add(editFileSwitcherButton, c);
     fileSwitchersButtonPanel.add(deleteFileSwitcherButton, c);
-
     fileSwitcherTableModel = new FileSwitcherTableModel(callbacks);
     fileSwitcherTable = new JTable(fileSwitcherTableModel);
     fileSwitcherTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -180,15 +179,21 @@ public class FileSwitchers {
           return;
         }
 
-        int f = e.getFirstIndex();
-        int l = e.getLastIndex();
-
-        for (int i=f; i <= l; i++) {
-          if (lsm.isSelectedIndex(i)) {
-            parent.loadFile(fileSwitcherTableModel.get(i));
-            break;
-          }
+        int viewRow = fileSwitcherTable.getSelectedRow();
+        if (viewRow >= 0) {
+          parent.loadFile(fileSwitcherTableModel.get(viewRow));
+          return;
         }
+
+//        int f = e.getFirstIndex();
+//        int l = e.getLastIndex();
+//
+//        for (int i=f; i <= l; i++) {
+//          if (lsm.isSelectedIndex(i)) {
+//            parent.loadFile(fileSwitcherTableModel.get(i));
+//            break;
+//          }
+//        }
       }
     });
 

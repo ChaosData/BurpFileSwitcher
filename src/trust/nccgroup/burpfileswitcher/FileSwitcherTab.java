@@ -55,6 +55,7 @@ public class FileSwitcherTab extends JPanel implements ITab {
 
   public void postInit() {
     fse.postInit();
+    this.editor = fse.getEditor();
   }
 
   public FileSwitchers getFileSwitchers() {
@@ -109,9 +110,10 @@ public class FileSwitcherTab extends JPanel implements ITab {
     UIManager.put("RSyntaxTextAreaUI.actionMap", null);
     JTextComponent.removeKeymap("RTextAreaKeymap");
 
-    editor = new TextEditorPane(RTextArea.INSERT_MODE, true);
-    editor.setDirty(false);
+    //editor = new TextEditorPane(RTextArea.INSERT_MODE, true);
+    //editor.setDirty(false);
 
+    /*
     editor.addPropertyChangeListener(TextEditorPane.DIRTY_PROPERTY, new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
@@ -125,14 +127,17 @@ public class FileSwitcherTab extends JPanel implements ITab {
         }
       }
     });
-    editor.setCodeFoldingEnabled(false);
+    */
 
-    RTextScrollPane editor_pane = new RTextScrollPane(editor, true);
-    editor.setEnabled(true);
-    editor.setTabSize(2);
-    editor.setTabsEmulated(true);
-    editor_pane.setEnabled(true);
+//    editor.setCodeFoldingEnabled(false);
 
+//    RTextScrollPane editor_pane = new RTextScrollPane(editor, true);
+//    editor.setEnabled(true);
+//    editor.setTabSize(2);
+//    editor.setTabsEmulated(true);
+//    editor_pane.setEnabled(true);
+
+    /*
     editor.addKeyListener(new KeyListener() {
       @Override
       public void keyTyped(KeyEvent e) {
@@ -177,6 +182,7 @@ public class FileSwitcherTab extends JPanel implements ITab {
       public void keyReleased(KeyEvent e) {
       }
     });
+    */
 
 //    LookAndFeel laf = UIManager.getLookAndFeel();
 //
@@ -186,18 +192,18 @@ public class FileSwitcherTab extends JPanel implements ITab {
 //      e.printStackTrace();
 //    }
 
-    editor.setFont(new Font(Font.MONOSPACED, editor.getFont().getStyle(), 12));
-    Theme theme;
-    try {
-      theme = Theme.load(getClass().getResourceAsStream("/org/fife/ui/rsyntaxtextarea/themes/dark.xml"));
-      theme.apply(editor);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+//    editor.setFont(new Font(Font.MONOSPACED, editor.getFont().getStyle(), 12));
+//    Theme theme;
+//    try {
+//      theme = Theme.load(getClass().getResourceAsStream("/org/fife/ui/rsyntaxtextarea/themes/dark.xml"));
+//      theme.apply(editor);
+//    } catch (IOException e) {
+//      e.printStackTrace();
+//    }
 
-    editor.setEditable(false);
-    callbacks.customizeUiComponent(editor);
-    callbacks.customizeUiComponent(editor_pane);
+//    editor.setEditable(false);
+//    callbacks.customizeUiComponent(editor);
+//    callbacks.customizeUiComponent(editor_pane);
 
     //splitPane.setRightComponent(editor_pane);
     splitPane.setRightComponent(fse);

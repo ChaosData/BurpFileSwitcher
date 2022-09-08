@@ -1,6 +1,7 @@
 package trust.nccgroup.burpfileswitcher;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 public class FileSwitch {
 
