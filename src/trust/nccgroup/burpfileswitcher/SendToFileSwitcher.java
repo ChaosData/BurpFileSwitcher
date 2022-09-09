@@ -61,7 +61,7 @@ public class SendToFileSwitcher implements IContextMenuFactory {
                 callbacks.issueAlert("[FileSwitcher] Failed to decode response as UTF-8.");
               }
             }
-            FileSwitch fs = new FileSwitch(FileManager.getKey(u), comment);
+            FileSwitch fs = new FileSwitch(FileManager.getKey(u), null, comment);
             fs.setData(data);
             fstm.add(fs);
             successes += 1;

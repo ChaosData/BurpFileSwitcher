@@ -19,6 +19,7 @@ public class FileSwitcherTableModel extends AbstractTableModel {
   private String[] columnNames = {
     "Enabled",
     "URI",
+    "Remote URI",
     "Comment",
   };
 
@@ -53,6 +54,8 @@ public class FileSwitcherTableModel extends AbstractTableModel {
       case 1:
         return tempFS.getUri();
       case 2:
+        return tempFS.remote_uri;
+      case 3:
         return tempFS.comment;
       default:
         return null;
@@ -86,6 +89,9 @@ public class FileSwitcherTableModel extends AbstractTableModel {
         add(tempFS, false);
         break;
       case 2:
+        tempFS.remote_uri = (String)value;
+        break;
+      case 3:
         tempFS.comment = (String)value;
         break;
       default:
@@ -107,6 +113,9 @@ public class FileSwitcherTableModel extends AbstractTableModel {
   }
 
   public void add(FileSwitch f, boolean save) {
+    if (f.getUriKey() == null) {
+      f.setUri("");
+    }
     FileSwitch popped = FileManager.getInstance().removeFile(f.getUriKey());
     if (popped != null) {
       List<Integer> l = new ArrayList<>();
@@ -128,12 +137,13 @@ public class FileSwitcherTableModel extends AbstractTableModel {
 
   void update(int selectedRow, FileSwitch _f) {
     FileSwitch fs = fileSwitches.get(selectedRow);
-    FileManager.getInstance().removeFile(fs.getUriKey());
+    //FileManager.getInstance().removeFile(fs.getUriKey());
     fs.isEnabled = _f.isEnabled;
     fs.setUri(_f.getUri());
+    fs.remote_uri = _f.remote_uri;
     fs.comment = _f.comment;
     fs.setData(_f.getData());
-    add(fs, false);
+    //add(fs, false);
     save();
   }
 

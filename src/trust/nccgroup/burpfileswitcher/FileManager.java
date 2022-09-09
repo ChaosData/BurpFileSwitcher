@@ -29,6 +29,9 @@ public class FileManager {
 
 
   public static String getKey(String uri) {
+    if ("".equals(uri)) {
+      return null;
+    }
     try {
       URL u = new URL(uri);
       return getKey(u);
@@ -78,6 +81,20 @@ public class FileManager {
     return key;
   }
 
+  public FileSwitch getFileSwitch(String key) {
+    FileSwitch fs = map.getOrDefault(key, null);
+    if (fs != null) {
+      if (!fs.isEnabled) {
+        return null;
+      }
+      return fs;
+    }
+    return null;
+  }
+
+  public FileSwitch getFileSwitch(URL u) {
+    return getFileSwitch(getKey(u));
+  }
 
   public byte[] getFile(String key) {
     FileSwitch fs = map.getOrDefault(key, null);

@@ -24,8 +24,10 @@ public class FileSwitchers {
   // FileSwitchers popup UI
   private JPanel fileSwitcherPanel;
   private JTextField fileSwitcherUriTextField;
+  private JTextField fileSwitcherRemoteUriTextField;
   private JTextField fileSwitcherCommentTextField;
   private JLabel fileSwitcherUriLabel;
+  private JLabel fileSwitcherRemoteUriLabel;
   private JLabel fileSwitcherCommentLabel;
 
   // FileSwitchers Data Store
@@ -60,12 +62,14 @@ public class FileSwitchers {
     c = new GridBagConstraints();
 
     fileSwitcherUriTextField = new JTextField();
+    fileSwitcherRemoteUriTextField = new JTextField();
     fileSwitcherCommentTextField = new JTextField();
 
     fileSwitcherUriTextField.setPreferredSize(BurpFileSwitcher.textFieldDimension);
     fileSwitcherCommentTextField.setPreferredSize(BurpFileSwitcher.textFieldDimension);
 
     fileSwitcherUriLabel = new JLabel("URI: ");
+    fileSwitcherRemoteUriLabel = new JLabel("Remote URI: ");
     fileSwitcherCommentLabel = new JLabel("Comment: ");
 
     c.anchor = GridBagConstraints.WEST;
@@ -73,6 +77,8 @@ public class FileSwitchers {
     c.gridy = 0;
     fileSwitcherPanel.add(fileSwitcherUriLabel, c);
     c.gridy = 1;
+    fileSwitcherPanel.add(fileSwitcherRemoteUriLabel, c);
+    c.gridy = 2;
     fileSwitcherPanel.add(fileSwitcherCommentLabel, c);
 
     c.anchor = GridBagConstraints.EAST;
@@ -81,6 +87,8 @@ public class FileSwitchers {
     c.gridy = 0;
     fileSwitcherPanel.add(fileSwitcherUriTextField, c);
     c.gridy = 1;
+    fileSwitcherPanel.add(fileSwitcherRemoteUriTextField, c);
+    c.gridy = 2;
     fileSwitcherPanel.add(fileSwitcherCommentTextField, c);
 
     // FileSwitch Buttons
@@ -98,13 +106,16 @@ public class FileSwitchers {
           JOptionPane.OK_CANCEL_OPTION,
           JOptionPane.PLAIN_MESSAGE);
       if (result == JOptionPane.OK_OPTION) {
-        FileSwitch newFileSwitch = new FileSwitch(
+        if (fileSwitcherUriTextField.getText() != null && !"".equals(fileSwitcherUriTextField.getText())) {
+          FileSwitch newFileSwitch = new FileSwitch(
             fileSwitcherUriTextField.getText(),
+            fileSwitcherRemoteUriTextField.getText(),
             fileSwitcherCommentTextField.getText()
-        );
-        fileSwitcherTableModel.add(newFileSwitch);
-        fileSwitcherTableModel.fireTableDataChanged();
-        parent.loadFile(newFileSwitch);
+          );
+          fileSwitcherTableModel.add(newFileSwitch);
+          fileSwitcherTableModel.fireTableDataChanged();
+          parent.loadFile(newFileSwitch);
+        }
       }
       resetFileSwitcherDialog();
     });
@@ -121,6 +132,7 @@ public class FileSwitchers {
         FileSwitch tempFileSwitcher = fileSwitcherTableModel.get(selectedRow);
 
         fileSwitcherUriTextField.setText(tempFileSwitcher.getUri());
+        fileSwitcherRemoteUriTextField.setText(tempFileSwitcher.remote_uri);
         fileSwitcherCommentTextField.setText(tempFileSwitcher.comment);
 
         int result = JOptionPane.showConfirmDialog(
@@ -132,6 +144,7 @@ public class FileSwitchers {
         if (result == JOptionPane.OK_OPTION) {
           FileSwitch newFileSwitcher = new FileSwitch(
               fileSwitcherUriTextField.getText(),
+              fileSwitcherRemoteUriTextField.getText(),
               fileSwitcherCommentTextField.getText()
           );
           fileSwitcherTableModel.update(selectedRow, newFileSwitcher);
@@ -220,6 +233,7 @@ public class FileSwitchers {
 
   private void resetFileSwitcherDialog() {
     fileSwitcherUriTextField.setText("");
+    fileSwitcherRemoteUriTextField.setText("");
     fileSwitcherCommentTextField.setText("");
   }
 

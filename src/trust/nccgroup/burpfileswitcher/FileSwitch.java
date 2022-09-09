@@ -10,14 +10,16 @@ public class FileSwitch {
   private transient String uri_key;
   private String data;
   private transient byte[] raw_data;
+  public String remote_uri;
   public String comment;
 
-  public FileSwitch(String _uri, String _comment) {
+  public FileSwitch(String _uri, String _remote_uri, String _comment) {
     isEnabled = true;
     uri = _uri;
     uri_key = FileManager.getKey(uri);
     data = "";
     raw_data = data.getBytes(StandardCharsets.UTF_8);
+    remote_uri = _remote_uri;
     comment = _comment;
   }
 

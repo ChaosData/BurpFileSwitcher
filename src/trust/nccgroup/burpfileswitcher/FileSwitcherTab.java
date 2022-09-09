@@ -240,6 +240,12 @@ public class FileSwitcherTab extends JPanel implements ITab {
 
     selectedFileSwitch = fileSwitcher;
 
+    if (selectedFileSwitch.remote_uri != null && !"".equals(selectedFileSwitch.remote_uri)) {
+      editor.setEnabled(false);
+      editor.setText("Using remote URI: " + selectedFileSwitch.remote_uri);
+      return;
+    }
+
     editor.setText(selectedFileSwitch.getData());
     editor.setDirty(false);
 

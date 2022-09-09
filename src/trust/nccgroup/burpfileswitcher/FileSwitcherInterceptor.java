@@ -2,7 +2,9 @@ package trust.nccgroup.burpfileswitcher;
 
 import burp.*;
 
+import java.net.URI;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,15 +38,50 @@ public class FileSwitcherInterceptor implements IProxyListener {
       return;
     }
 
+    String orig_req_str = new String(orig_req, StandardCharsets.UTF_8);
+    String first_line = orig_req_str.substring(0, orig_req_str.indexOf("\r\n"));
+    if (!messageIsRequest && first_line.contains("#fileswitcher-http2 HTTP/1.1")) {
+      String orig_res_str = new String(messageInfo.getResponse(), StandardCharsets.UTF_8);
+      String new_res_str = orig_res_str.replace("HTTP/1.1", "HTTP/2");
+      messageInfo.setResponse(new_res_str.getBytes(StandardCharsets.UTF_8));
+      return;
+    }
+
     FileManager fm = FileManager.getInstance();
     URL u = ireqi.getUrl();
 
-    byte[] alt = fm.getFile(u);
-    if (alt == null) {
+    FileSwitch fs = fm.getFileSwitch(u);
+    if (fs == null) {
       return;
     }
 
     if (messageIsRequest) {
+      if (fs.remote_uri != null && !"".equals(fs.remote_uri)) {
+        try {
+          IHttpService orig_httpservice = messageInfo.getHttpService();
+          URI nu = new URI(fs.remote_uri);
+          IHttpService new_httpservice = new HttpService(nu);
+          //String orig_req_str = new String(orig_req, StandardCharsets.UTF_8);
+          String new_req_str = orig_req_str.replace("GET " + u.getPath(), "GET " + nu.getRawPath() + "?" + nu.getRawQuery());
+          boolean ish2 = first_line.contains(" HTTP/2");
+
+          if (ish2) {
+            new_req_str = new_req_str.replace(" HTTP/2", "#fileswitcher-http2 HTTP/1.1");
+          }
+
+          //IHttpRequestResponse nres = callbacks.makeHttpRequest(new_httpservice, orig_req_str.getBytes(StandardCharsets.UTF_8), false);
+          //messageInfo.setResponse(nres.getResponse());
+
+          messageInfo.setHttpService(new_httpservice);
+          messageInfo.setRequest(new_req_str.getBytes(StandardCharsets.UTF_8));
+
+          return;
+        } catch (Throwable t) {
+          t.printStackTrace();
+          return;
+        }
+      }
+
       String req_s = new String(orig_req, StandardCharsets.UTF_8);
       String[] lines = crlf_matcher.split(req_s, -1);
 
@@ -80,8 +117,17 @@ public class FileSwitcherInterceptor implements IProxyListener {
       return;
     }
 
-
     byte[] orig_res = messageInfo.getResponse();
+
+    if (fs.remote_uri != null && !"".equals(fs.remote_uri)) {
+      return;
+    }
+
+    byte[] alt = fs.getRawData();
+    if (alt == null) {
+      return;
+    }
+
     IResponseInfo iresi = helpers.analyzeResponse(orig_res);
     int bp = iresi.getBodyOffset();
     byte[] head = new byte[bp];
